@@ -11,7 +11,7 @@ PORT = 11112
 AETITLE = ''
 
 
-# blank_db = sqlite3.connect('/home/develop4/Desktop/higia_projects/watchdog_dicom/test2.db')
+# blank_db = sqlite3.connect('')
 # cur = blank_db.cursor()
 # cur.execute("CREATE TABLE IF NOT EXISTS senderror(a INTEGER PRIMARY KEY,path VARCHAR(200));")
      
