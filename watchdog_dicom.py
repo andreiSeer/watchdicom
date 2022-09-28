@@ -29,8 +29,8 @@ if __name__ == "__main__":
 def on_created(event):  
     
     try: 
-        if PDCM.dcmread(event.src_path):
-            dicom = PDCM.dcmread(event.src_path)
+        if PDCM.read_file(event.src_path,force=True):
+            dicom = PDCM.read_file(event.src_path)
             if dicom.StudyInstanceUID:
 
                 con = sqlite3.connect("db_file_dicom.db")
@@ -45,8 +45,8 @@ def on_created(event):
 
                     forming_path = f"{dir_path}/{one_file_inside}"
 
-                    if PDCM.dcmread(forming_path):
-                        dicom = PDCM.dcmread(forming_path)
+                    if PDCM.read_file(forming_path,force=True):
+                        dicom = PDCM.read_file(forming_path,force=True)
                         if dicom.StudyInstanceUID:
 
                             cur.execute(f"SELECT * FROM senderror WHERE path='{one_file_inside}'")
