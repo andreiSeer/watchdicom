@@ -1,5 +1,5 @@
 # watchdicom
-Small Script that observes the arrival of dicom file a tries to send it to one PACS
+Small Script that observes the arrival of dicom file a tries to send it to a PACS
 ## How To Use
 1. Set your credntials
 
