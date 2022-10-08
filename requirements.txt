@@ -1,3 +1,4 @@
 pydicom==2.3.0
 pynetdicom==2.0.2
 watchdog==2.1.9
+python-decouple==3.3
