@@ -1,5 +1,18 @@
 # watchdicom
 Small Script that observes the arrival of dicom file a tries to send it to a PACS. 
+## Requirements
+- Copy environment variables and change it:
+
+`cp contrib/env .env`
+
+- Create virtual enviroment and install dependences:
+
+```
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install -r requirements.txt
+```
+
 ## How To Use
 1. Dependencies
     * watchdog
