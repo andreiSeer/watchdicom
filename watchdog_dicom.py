@@ -15,6 +15,8 @@ PORT = config('PORT',cast=int)
 AETITLE = config('AETITLE',cast=str)
 DEBUG = config('SHOW_FEEDBACK',cast=bool)
 
+
+
 def on_created(event):  
     try: 
         if PDCM.read_file(event.src_path,force=True):
@@ -59,6 +61,10 @@ def on_created(event):
                                 else:
                                     if DEBUG:
                                         print("Association lost.")
+                                    cur.execute(f"SELECT * FROM sendedfaildicom WHERE path='{forming_path}'")
+                                    if not cur.fetchone():
+                                        cur.execute("INSERT INTO sendedfaildicom(a,path) VALUES(?,?)",[None,str(forming_path)])
+                                        con.commit()                                        
                                 assoc.release()
                                
                 cur.close()
@@ -75,6 +81,7 @@ if __name__ == "__main__":
     con = sqlite3.connect("db_file_dicom.db")
     cur = con.cursor()                
     cur.execute("CREATE TABLE IF NOT EXISTS sendeddicom(a INTEGER PRIMARY KEY,path VARCHAR(200));")
+    cur.execute("CREATE TABLE IF NOT EXISTS sendedfaildicom(a INTEGER PRIMARY KEY,path VARCHAR(200));")
     con.commit()
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
 
