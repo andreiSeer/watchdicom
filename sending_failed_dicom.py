@@ -28,14 +28,17 @@ while True:
                     assoc = ae.associate(ADDR, PORT, ae_title=AETITLE)
                     if assoc.is_established:
                         try:
+                            print(f"Enviando imagem do paciente {dicom.PatientName}")
                             status = assoc.send_c_store(dicom)
                             if status:
                                 if DEBUG:
                                     print(f"send {str(forming_path)}")
+                                print(f"Imagem do paciente {dicom.PatientName} enviada")
                                 add_entry_on_sendeddicom_table(forming_path)
                         except Exception as e:
                             if DEBUG:
                                 print("Failed", e)
+                    assoc.release()
         else:
             if DEBUG:                
                 print("Já enviado")

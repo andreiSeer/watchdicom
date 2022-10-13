@@ -49,16 +49,19 @@ def on_created(event):
                                 assoc = ae.associate(ADDR, PORT, ae_title=AETITLE)
                                 if assoc.is_established:
                                     try:
+                                        print(f"Enviando imagem do paciente {dicom.PatientName}")
                                         status = assoc.send_c_store(dicom)
                                         if status:
                                             if DEBUG:
                                                 print(f"send {str(forming_path)}")
+                                            print(f"Imagem do paciente {dicom.PatientName} enviada")
                                             cur.execute("INSERT INTO sendeddicom(a,path) VALUES(?,?)",[None,str(forming_path)])
                                             con.commit()
                                     except Exception as e:
                                         if DEBUG:
                                             print("Failed", e)
                                 else:
+                                    print(f"Falha no envido da imagem do paciente {dicom.PatientName}")
                                     if DEBUG:
                                         print("Association lost.")
                                     cur.execute(f"SELECT * FROM sendedfaildicom WHERE path='{forming_path}'")
