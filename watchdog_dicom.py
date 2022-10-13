@@ -14,10 +14,11 @@ ADDR = config('ADDRESS',cast=str)
 PORT = config('PORT',cast=int)
 AETITLE = config('AETITLE',cast=str)
 DEBUG = config('SHOW_FEEDBACK',cast=bool)
+IGNORE_PATH_NAME = config('IGNORE_PATH_NAME',cast=str) 
 
 
-
-def on_created(event):  
+def on_created(event): 
+    print("Aqui") 
     try: 
         if PDCM.read_file(event.src_path,force=True):
             dicom = PDCM.read_file(event.src_path)
@@ -25,52 +26,59 @@ def on_created(event):
 
                 con = sqlite3.connect("db_file_dicom.db")
                 cur = con.cursor()
+                reg = re.compile(f'^{IGNORE_PATH_NAME}*')
+                #dir_path = os.path.dirname(event.src_path)
+                dir_path = [x for x in  os.path.dirname(event.src_path) if not reg.match(x)]
+                # [x for x in os.lisdir(path) if not reg.match(x)]
+                if not IGNORE_PATH_NAME in dir_path:
 
-                dir_path = os.path.dirname(event.src_path)
-                all_files_inside_dir = os.listdir(dir_path)
-                
-                for one_file_inside in all_files_inside_dir:
 
-                    forming_path = f"{dir_path}/{one_file_inside}"
+                    all_files_inside_dir = os.listdir(dir_path)
+                    
+                    for one_file_inside in all_files_inside_dir:
+                        # print(f"{IGNORE_PATH_NAME} {dir_path}")
+                        # if IGNORE_PATH_NAME in dir_path:
+                        #     continue
+                        forming_path = f"{dir_path}/{one_file_inside}"
 
-                    if PDCM.read_file(forming_path,force=True):
-                        dicom = PDCM.read_file(forming_path,force=True)
-                     
-                        if dicom.StudyInstanceUID:
+                        if PDCM.read_file(forming_path,force=True):
+                            dicom = PDCM.read_file(forming_path,force=True)
+                        
+                            if dicom.StudyInstanceUID:
 
-                            cur.execute(f"SELECT * FROM sendeddicom WHERE path='{forming_path}'")
-                            if cur.fetchone():
-                                if DEBUG:
-                                    print("Já existe")
-                                continue
-                            else:
-                                ae = AE(ae_title=AETITLE)
-                                ae.requested_contexts = StoragePresentationContexts
-                                assoc = ae.associate(ADDR, PORT, ae_title=AETITLE)
-                                if assoc.is_established:
-                                    try:
-                                        print(f"Enviando imagem do paciente {dicom.PatientName}")
-                                        status = assoc.send_c_store(dicom)
-                                        if status:
-                                            if DEBUG:
-                                                print(f"send {str(forming_path)}")
-                                            print(f"Imagem do paciente {dicom.PatientName} enviada")
-                                            cur.execute("INSERT INTO sendeddicom(a,path) VALUES(?,?)",[None,str(forming_path)])
-                                            con.commit()
-                                    except Exception as e:
-                                        if DEBUG:
-                                            print("Failed", e)
-                                else:
-                                    print(f"Falha no envido da imagem do paciente {dicom.PatientName}")
+                                cur.execute(f"SELECT * FROM sendeddicom WHERE path='{forming_path}'")
+                                if cur.fetchone():
                                     if DEBUG:
-                                        print("Association lost.")
-                                    cur.execute(f"SELECT * FROM sendedfaildicom WHERE path='{forming_path}'")
-                                    if not cur.fetchone():
-                                        cur.execute("INSERT INTO sendedfaildicom(a,path) VALUES(?,?)",[None,str(forming_path)])
-                                        con.commit()                                        
-                                assoc.release()
-                               
-                cur.close()
+                                        print("Já existe")
+                                    continue
+                                else:
+                                    ae = AE(ae_title=AETITLE)
+                                    ae.requested_contexts = StoragePresentationContexts
+                                    assoc = ae.associate(ADDR, PORT, ae_title=AETITLE)
+                                    if assoc.is_established:
+                                        try:
+                                            print(f"Enviando imagem do paciente {dicom.PatientName}")
+                                            status = assoc.send_c_store(dicom)
+                                            if status:
+                                                if DEBUG:
+                                                    print(f"send {str(forming_path)}")
+                                                print(f"Imagem do paciente {dicom.PatientName} enviada")
+                                                cur.execute("INSERT INTO sendeddicom(a,path) VALUES(?,?)",[None,str(forming_path)])
+                                                con.commit()
+                                        except Exception as e:
+                                            if DEBUG:
+                                                print("Failed", e)
+                                    else:
+                                        print(f"Falha no envido da imagem do paciente {dicom.PatientName}")
+                                        if DEBUG:
+                                            print("Association lost.")
+                                        cur.execute(f"SELECT * FROM sendedfaildicom WHERE path='{forming_path}'")
+                                        if not cur.fetchone():
+                                            cur.execute("INSERT INTO sendedfaildicom(a,path) VALUES(?,?)",[None,str(forming_path)])
+                                            con.commit()                                        
+                                    assoc.release()
+                                
+                    cur.close()
     
     except Exception as e:
         print("Error ",e)
