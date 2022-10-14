@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+from tkinter import E
 from unittest import result
 from decouple import config
 DATA_BASE = config('DB_NAME',cast=str)
@@ -152,33 +153,89 @@ class SeriesTable:
         return False
 
 
+
+
+
 class DicomTable:
-    
+    #FIELDS 
+
+    # id INTEGER PRIMARY KEY,
+    # file_path VARCHAR(250),                                                    
+    # was_send BOOLEAN default 0,
+    # datetime_send TEXT,
+    # id_serie INTEGER,
+    # FOREIGN KEY(id_serie) REFERENCES series(id))
+
     table_name = "dicom"
 
     @staticmethod
-    def add_entry():
+    def create_data_set(id_serie,file_path):
+        dict_study ={
+            "file_path":str(file_path),
+            "id_serie":str(id_serie),                   
+        }
+        return dict_study
+
+    @staticmethod
+    def add_and_retrieve_entry(dict_series):
         con = sqlite3.connect(DATA_BASE)
         cur = con.cursor()
-        #cur.execute("INSERT INTO dicom(a,path) VALUES(?,?)",[None,str(forming_path)])
+        search_result = None
+        cur.execute("""INSERT INTO dicom(id,
+                                        file_path,
+                                        was_send,
+                                        datetime_send,
+                                        id_serie) VALUES(?,?,?,?,?)""",[None,dict_series["file_path"],None,None,dict_series["id_serie"]])
         con.commit()
+        cur.execute(f"SELECT * FROM dicom WHERE file_path='{dict_series['file_path']}' AND id_serie='{dict_series['id_serie']}'")
+        search_result = cur.fetchone()
         cur.close()
+        return search_result
         
 
     @staticmethod
-    def look_for_entry(file_path):
-        con = sqlite3.connect(DATA_BASE)
+    def look_for_entry(file_path,dir_path,msg=None):
+       
+        con = sqlite3.connect(DATA_BASE)        
         cur = con.cursor()
         cur.execute(f"SELECT * FROM dicom WHERE file_path='{file_path}'")
-        if cur.fetchone():
-            cur.close()
-            return True
+        
+        if search_dicom:=cur.fetchone():
+
+            cur_serie = con.cursor()         
+            cur_serie.execute(f"SELECT * FROM series where dir_path='{dir_path}' AND id='{search_dicom[4]}'")      
+
+            if cur_serie.fetchone():
+
+                print("Found - cant continue")
+                cur.close()
+                cur_serie.close()
+
+                return True
+
+            else:
+
+                cur_serie.close()
+                print("Series not found - can continue")       
+
+        else:
+
+            print("Dicom not found - can continue")
+
         cur.close()
+
         return False
 
     @staticmethod
-    def update_entry():
-        pass
+    def update_entry(file_path):
+        con = sqlite3.connect(DATA_BASE)
+        cur = con.cursor()
+        was_send = "1"
+        seding_date =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cur.execute(f"UPDATE dicom SET was_send='{was_send}',datetime_send='{seding_date}'  WHERE file_path='{file_path}'")
+        con.commit()
+        cur.close()
+        
 
     @staticmethod
     def send_dicom_to_pacs():
