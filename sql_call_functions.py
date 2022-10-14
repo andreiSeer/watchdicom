@@ -239,7 +239,28 @@ class DicomTable:
         cur.close()
         return records
 
+    @staticmethod
+    def sended_all_dicom_file():
+
+        con = sqlite3.connect(DATA_BASE)
+        cur = con.cursor()
+        was_send = "0"
+        cur.execute(f"SELECT * FROM dicom")
+        records = cur.fetchall()
+        cur.close()
+        return records
+
 
     @staticmethod
     def send_dicom_to_pacs():
         pass
+
+    @staticmethod
+    def return_allowed_dicoms(all_files_inside_dir,dir_path):
+
+        all_dicom = DicomTable.sended_all_dicom_file()
+        new_file_list = []
+        for one_dicom in all_dicom:
+            if one_dicom[1] in all_files_inside_dir:
+               all_files_inside_dir.remove(one_dicom[1])
+        

@@ -23,26 +23,23 @@ def on_created(event):
 
             #TODO: Replace for Regex verification
             if not IGNORE_PATH_NAME in dir_path:
-                all_files_inside_dir = os.listdir(dir_path)                
-                
-                if not DicomTable.look_for_entry(os.path.basename(event.src_path),dir_path):
-                    
+                all_files_inside_dir = os.listdir(dir_path)  
+                              
+                dicom_file = os.path.basename(event.src_path)
+
+                if not DicomTable.look_for_entry(dicom_file,dir_path):
+                    DicomTable.return_allowed_dicoms(all_files_inside_dir,dir_path)
+
                     for one_inside_dir in all_files_inside_dir:
+                        file_path = f"{dir_path}/{one_inside_dir}"
 
-                        if not DicomTable.look_for_entry(one_inside_dir,dir_path,"internos"):
+                        if dicom:=check_if_file_is_dicom_and_return(file_path):    
 
-                            file_path = f"{dir_path}/{one_inside_dir}"
+                            result_search_study=StudyTable.add_and_retrieve_entry(StudyTable.create_data_set(dicom))
+                            result_search_series = SeriesTable.add_and_retrieve_entry(SeriesTable.create_data_set(result_search_study,dir_path,dicom))                            
+                            DicomTable.add_and_retrieve_entry(DicomTable.create_data_set(result_search_series[0],one_inside_dir))
+                            store_scu(dicom,one_inside_dir)
 
-                            if dicom:=check_if_file_is_dicom_and_return(file_path): 
-                                                        
-                                result_search_study=StudyTable.add_and_retrieve_entry(StudyTable.create_data_set(dicom))
-                                result_search_series = SeriesTable.add_and_retrieve_entry(SeriesTable.create_data_set(result_search_study,dir_path,dicom))                            
-                                DicomTable.add_and_retrieve_entry(DicomTable.create_data_set(result_search_series[0],one_inside_dir))
-                                store_scu(dicom,one_inside_dir)
-
-                                #print(result_search_dicom)
-                        else:
-                            print("Dicom Already Present Inside")     
                     print("----------------------------------------------------------------------------")                       
                 else:
                     print("Dicom Already Present Outside")
