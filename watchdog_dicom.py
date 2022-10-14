@@ -25,20 +25,15 @@ def on_created(event):
             dir_path = os.path.dirname(event.src_path)        
        
             if not IGNORE_PATH_NAME in dir_path:
+
                 all_files_inside_dir = os.listdir(dir_path)                
-                for one_file_inside in all_files_inside_dir:          
+                for one_file_inside in all_files_inside_dir: 
+
                     forming_path = f"{dir_path}/{one_file_inside}"
+                    if dicom:=check_if_file_is_dicom_and_return(event.src): 
+                        pass                      
 
-                    if dicom:=check_if_file_is_dicom_and_return(event.src):                        
-
-                        cur.execute(f"SELECT * FROM sendeddicom WHERE path='{forming_path}'")
-                        if cur.fetchone(dicom):
-                            if DEBUG:
-                                print("Já existe")
-                            continue
-                        else:
-                            store_scu()
-                            pass
+                      
                 cur.close()
     
     except Exception as e:
@@ -59,8 +54,8 @@ path = config('PATH_DIR',cast=str)
 go_recursively = True
 my_observer = Observer()
 my_observer.schedule(my_event_handler, path, recursive=go_recursively)
-
 my_observer.start()
+
 try:
     while True:
         time.sleep(1)
