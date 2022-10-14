@@ -7,7 +7,7 @@ from decouple import config
 
 
 DEBUG = config('SHOW_FEEDBACK',cast=bool)
-IGNORE_PATH_NAME = config('IGNORE_PATH_NAME',cast=str) 
+IGNORE_PATH_NAME = config('IGNORE_PATH_PATTERN',cast=str) 
 
 
 def on_created(event): 
@@ -17,7 +17,7 @@ def on_created(event):
             dicom = PDCM.read_file(event.src_path)
             if dicom.StudyInstanceUID:
 
-                con = sqlite3.connect("db_file_dicom.db")
+                con = sqlite3.connect(config('DB_NAME',cast=str))
                 cur = con.cursor()   
                 dir_path = os.path.dirname(event.src_path)
           
@@ -74,13 +74,14 @@ def on_created(event):
 
 
 if __name__ == "__main__":
+
     patterns = ["*"]
     ignore_patterns = None
     ignore_directories = False
     case_sensitive = True
-    con = sqlite3.connect("db_file_dicom.db")
+    con = sqlite3.connect(config('DB_NAME',cast=str))
     cur = con.cursor()  
-    #'2007-01-01 10:00:00'              
+                
     cur.execute("""CREATE TABLE IF NOT EXISTS study(id INTEGER PRIMARY KEY,
                                                     study_uid VARCHAR(300),
                                                     patient_name VARCHAR(200),
@@ -99,9 +100,9 @@ if __name__ == "__main__":
                                                     id INTEGER PRIMARY KEY,
                                                     file_path VARCHAR(250),                                                    
                                                     was_send BOOLEAN default 0,
+                                                    datetime_send DATETIME,
                                                     id_serie INTEGER,
-                                                    FOREIGN KEY(id_serie) REFERENCES series(id)
-                                                    datetime_send DATETIME);""")
+                                                    FOREIGN KEY(id_serie) REFERENCES series(id));""")
     con.commit()
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
 
