@@ -1,15 +1,7 @@
 import time
-from watchdog.observers import Observer
-from watchdog.events import PatternMatchingEventHandler
-import pydicom as PDCM
-from pynetdicom import AE,StoragePresentationContexts
-import os
 from decouple import config
 from sql_call_functions import *
 
-ADDR = config('ADDRESS',cast=str)
-PORT = config('PORT',cast=int)
-AETITLE = config('AETITLE',cast=str)
 DEBUG = config('SHOW_FEEDBACK',cast=bool)
 WAIT_TIME = config('WAIT_TIME',cast=int)
 

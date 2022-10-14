@@ -1,44 +1,33 @@
 import time
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-import pydicom as PDCM
-from pynetdicom import (
-    AE,
-    StoragePresentationContexts
-)
 import sqlite3
 import os
 from decouple import config
 
-ADDR = config('ADDRESS',cast=str)
-PORT = config('PORT',cast=int)
-AETITLE = config('AETITLE',cast=str)
+
 DEBUG = config('SHOW_FEEDBACK',cast=bool)
 IGNORE_PATH_NAME = config('IGNORE_PATH_NAME',cast=str) 
 
 
 def on_created(event): 
-    print("Aqui") 
+    
     try: 
         if PDCM.read_file(event.src_path,force=True):
             dicom = PDCM.read_file(event.src_path)
             if dicom.StudyInstanceUID:
 
                 con = sqlite3.connect("db_file_dicom.db")
-                cur = con.cursor()
-                reg = re.compile(f'^{IGNORE_PATH_NAME}*')
-                #dir_path = os.path.dirname(event.src_path)
-                dir_path = [x for x in  os.path.dirname(event.src_path) if not reg.match(x)]
+                cur = con.cursor()   
+                dir_path = os.path.dirname(event.src_path)
+          
                 # [x for x in os.lisdir(path) if not reg.match(x)]
                 if not IGNORE_PATH_NAME in dir_path:
 
 
                     all_files_inside_dir = os.listdir(dir_path)
                     
-                    for one_file_inside in all_files_inside_dir:
-                        # print(f"{IGNORE_PATH_NAME} {dir_path}")
-                        # if IGNORE_PATH_NAME in dir_path:
-                        #     continue
+                    for one_file_inside in all_files_inside_dir:          
                         forming_path = f"{dir_path}/{one_file_inside}"
 
                         if PDCM.read_file(forming_path,force=True):
@@ -90,9 +79,29 @@ if __name__ == "__main__":
     ignore_directories = False
     case_sensitive = True
     con = sqlite3.connect("db_file_dicom.db")
-    cur = con.cursor()                
-    cur.execute("CREATE TABLE IF NOT EXISTS sendeddicom(a INTEGER PRIMARY KEY,path VARCHAR(200));")
-    cur.execute("CREATE TABLE IF NOT EXISTS sendedfaildicom(a INTEGER PRIMARY KEY,path VARCHAR(200));")
+    cur = con.cursor()  
+    #'2007-01-01 10:00:00'              
+    cur.execute("""CREATE TABLE IF NOT EXISTS study(id INTEGER PRIMARY KEY,
+                                                    study_uid VARCHAR(300),
+                                                    patient_name VARCHAR(200),
+                                                    modality VARCHAR(10),
+                                                    datetime_create DATETIME,
+                                                    patient_id VARCHAR(100));""")
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS series(
+                                                    id INTEGER PRIMARY KEY,
+                                                    series_uid VARCHAR(300),                                                    
+                                                    dir_path VARCHAR(200),
+                                                    id_study INTEGER,
+                                                    FOREIGN KEY(id_study) REFERENCES study(id));""")
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS dicom(
+                                                    id INTEGER PRIMARY KEY,
+                                                    file_path VARCHAR(250),                                                    
+                                                    was_send BOOLEAN default 0,
+                                                    id_serie INTEGER,
+                                                    FOREIGN KEY(id_serie) REFERENCES series(id)
+                                                    datetime_send DATETIME);""")
     con.commit()
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
 
