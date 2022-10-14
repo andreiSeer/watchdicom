@@ -1,7 +1,7 @@
 import time
 import os
-from decouple import config
 
+from decouple import config
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 
@@ -37,7 +37,7 @@ def on_created(event):
                                                         
                                 result_search_study=StudyTable.add_and_retrieve_entry(StudyTable.create_data_set(dicom))
                                 result_search_series = SeriesTable.add_and_retrieve_entry(SeriesTable.create_data_set(result_search_study,dir_path,dicom))                            
-                                result_search_dicom  = DicomTable.add_and_retrieve_entry(DicomTable.create_data_set(result_search_series[0],one_inside_dir))
+                                DicomTable.add_and_retrieve_entry(DicomTable.create_data_set(result_search_series[0],one_inside_dir))
                                 store_scu(dicom,one_inside_dir)
 
                                 #print(result_search_dicom)

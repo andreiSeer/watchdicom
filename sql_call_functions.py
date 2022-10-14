@@ -95,17 +95,7 @@ class StudyTable:
         cur.close()
         return search_result    
 
-    @staticmethod
-    def look_for_entry(study_uid,patient_id):
-        con = sqlite3.connect(DATA_BASE)
-        cur = con.cursor()
-        cur.execute(f"SELECT * FROM study WHERE study_uid='{study_uid}' AND patient_id='{patient_id}'")
-        if cur.fetchone():
-            print(cur)
-            cur.close()
-            return True
-        cur.close()
-        return False
+  
        
 
 class SeriesTable:
@@ -141,16 +131,16 @@ class SeriesTable:
         cur.close()
         return search_result
 
+
     @staticmethod
-    def look_for_entry(id_study,series_uid):
+    def look_for_series_entry(series_id):
         con = sqlite3.connect(DATA_BASE)
         cur = con.cursor()
-        cur.execute(f"SELECT * FROM series WHERE id_study='{id_study}' AND series_uid='{series_uid}'")
-        if cur.fetchone():
-            cur.close()
-            return True
+        cur.execute(f"SELECT * FROM series WHERE id='{series_id}'")
+        query_result = cur.fetchone()
         cur.close()
-        return False
+        return query_result
+
 
 
 
@@ -185,7 +175,7 @@ class DicomTable:
                                         file_path,
                                         was_send,
                                         datetime_send,
-                                        id_serie) VALUES(?,?,?,?,?)""",[None,dict_series["file_path"],None,None,dict_series["id_serie"]])
+                                        id_serie) VALUES(?,?,?,?,?)""",[None,dict_series["file_path"],"0",None,dict_series["id_serie"]])
         con.commit()
         cur.execute(f"SELECT * FROM dicom WHERE file_path='{dict_series['file_path']}' AND id_serie='{dict_series['id_serie']}'")
         search_result = cur.fetchone()
@@ -199,7 +189,7 @@ class DicomTable:
         con = sqlite3.connect(DATA_BASE)        
         cur = con.cursor()
         cur.execute(f"SELECT * FROM dicom WHERE file_path='{file_path}'")
-        
+
         if search_dicom:=cur.fetchone():
 
             cur_serie = con.cursor()         
@@ -236,6 +226,19 @@ class DicomTable:
         con.commit()
         cur.close()
         
+
+
+    @staticmethod
+    def sended_failed_dicom_file():
+
+        con = sqlite3.connect(DATA_BASE)
+        cur = con.cursor()
+        was_send = "0"
+        cur.execute(f"SELECT * FROM dicom WHERE was_send='{was_send}'")
+        records = cur.fetchall()
+        cur.close()
+        return records
+
 
     @staticmethod
     def send_dicom_to_pacs():

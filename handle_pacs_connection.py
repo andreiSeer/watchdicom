@@ -1,6 +1,9 @@
+import time
+
 import pydicom as PDCM
 from pynetdicom import AE,StoragePresentationContexts
 from decouple import config
+
 from sql_call_functions import DicomTable
 
 ADDR = config('ADDRESS',cast=str)
@@ -11,11 +14,10 @@ DEBUG = config('SHOW_FEEDBACK',cast=bool)
 
 
 def check_if_file_is_dicom_and_return(src_path):
-    if PDCM.read_file(src_path,force=True):
-        dicom = PDCM.read_file(src_path)
+    time.sleep(2)
+    if dicom:=PDCM.read_file(src_path,force=True):        
         if dicom.StudyInstanceUID:
-            return dicom
-    
+            return dicom    
     return None
 
 
