@@ -13,24 +13,26 @@ from handle_pacs_connection import *
 
 
 DEBUG = config('SHOW_FEEDBACK',cast=bool)
-IGNORE_PATH_NAME = config('IGNORE_PATH_PATTERN',cast=str,default="")
+IGNORE_PATH_NAME = config('IGNORE_PATH_PATTERN',default="")
 
+def not_dir_exclude(path):
+    print(path)
+    if IGNORE_PATH_NAME:
+        reg = re.compile(f'{IGNORE_PATH_NAME}')
+        return reg.match(path) is None
+    return True
 
 def on_created(event): 
     
     try: 
-        if check_if_file_is_dicom_and_return(event.src_path) is not None:
+        if not_dir_exclude(event.src_path) and check_if_file_is_dicom_and_return(event.src_path) is not None:
 
             dir_path = os.path.dirname(event.src_path) 
 
             #TODO: Replace for Regex verification
       
             all_files_inside_dir = os.listdir(dir_path)  
-            if IGNORE_PATH_NAME:
-                print("AQUi")
-                reg = re.compile(f'{IGNORE_PATH_NAME}')
-                all_files_inside_dir = [x for x in all_files_inside_dir if not reg.match(x)]
-
+            
             dicom_file = os.path.basename(event.src_path)
 
             if not DicomTable.look_for_entry(dicom_file,dir_path):
