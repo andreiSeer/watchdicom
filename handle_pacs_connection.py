@@ -14,6 +14,7 @@ def check_if_file_is_dicom_and_return(src_path):
         dicom = PDCM.read_file(src_path)
         if dicom.StudyInstanceUID:
             return dicom
+    print("HERE")
     return None
 
 

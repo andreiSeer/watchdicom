@@ -1,5 +1,4 @@
 import time
-import sqlite3
 import os
 from decouple import config
 
@@ -12,29 +11,36 @@ from handle_pacs_connection import *
 
 
 DEBUG = config('SHOW_FEEDBACK',cast=bool)
-IGNORE_PATH_NAME = config('IGNORE_PATH_PATTERN',cast=str) 
+IGNORE_PATH_NAME = "HELLO"
 
 
 def on_created(event): 
     
     try: 
-        if check_if_file_is_dicom_and_return(event.src):            
+        if check_if_file_is_dicom_and_return(event.src_path) is not None:
 
-            con = sqlite3.connect(DATA_BASE)
-            cur = con.cursor()   
-            dir_path = os.path.dirname(event.src_path)        
-       
+            dir_path = os.path.dirname(event.src_path)           
+            #TODO: Replace for Regex verification
             if not IGNORE_PATH_NAME in dir_path:
-
                 all_files_inside_dir = os.listdir(dir_path)                
-                for one_file_inside in all_files_inside_dir: 
+                if not DicomTable.look_for_entry(event.src_path):                    
+                    for one_inside_dir in all_files_inside_dir:
+                        file_path = f"{dir_path}/{one_inside_dir}"
+                        if dicom:=check_if_file_is_dicom_and_return(file_path):
+                            
+                            result_search_study=StudyTable.add_and_retrieve_entry(StudyTable.create_data_set(dicom))
 
-                    forming_path = f"{dir_path}/{one_file_inside}"
-                    if dicom:=check_if_file_is_dicom_and_return(event.src): 
-                        pass                      
+                            result_search_series = SeriesTable.add_and_retrieve_entry(SeriesTable.create_data_set(result_search_study,dir_path,dicom))
 
-                      
-                cur.close()
+
+
+                            
+                else:
+                    print("Dicom Already Present")
+                              
+        
+        else:
+            print("Não é DICOM")
     
     except Exception as e:
         print("Error ",e)

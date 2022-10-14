@@ -1,4 +1,6 @@
 import sqlite3
+import datetime
+from unittest import result
 from decouple import config
 DATA_BASE = config('DB_NAME',cast=str)
 
@@ -18,7 +20,7 @@ DATA_BASE = config('DB_NAME',cast=str)
 #     con.commit()
 #     cur.close()
 
-
+#DATETIME SQLITE FORMAT '2007-01-01 10:00:00'   
 def create_or_start_db():
     con = sqlite3.connect(DATA_BASE)
     cur = con.cursor()  
@@ -27,7 +29,7 @@ def create_or_start_db():
                                                     study_uid VARCHAR(300),
                                                     patient_name VARCHAR(200),
                                                     modality VARCHAR(10),
-                                                    datetime_create DATETIME,
+                                                    datetime_create TEXT,
                                                     patient_id VARCHAR(100));""")
 
     cur.execute("""CREATE TABLE IF NOT EXISTS series(
@@ -41,29 +43,56 @@ def create_or_start_db():
                                                     id INTEGER PRIMARY KEY,
                                                     file_path VARCHAR(250),                                                    
                                                     was_send BOOLEAN default 0,
-                                                    datetime_send DATETIME,
+                                                    datetime_send TEXT,
                                                     id_serie INTEGER,
                                                     FOREIGN KEY(id_serie) REFERENCES series(id));""")
     con.commit()
+    cur.close()
 
 class StudyTable:
-
     
     table_name = "study"
 
     @staticmethod
-    def add_entry(dict_study):
+    def create_data_set(dicom):
+        dict_study ={
+            "study_uid":str(dicom.StudyInstanceUID),
+            "patient_name":str(dicom.PatientName),
+            "modality":str(dicom.Modality),
+            "patient_id":str(dicom.PatientID),
+            "datetime_create":"",
+        }
+
+        return dict_study
+
+    @staticmethod
+    def add_and_retrieve_entry(dict_study):
         con = sqlite3.connect(DATA_BASE)
         cur = con.cursor()
-        cur.execute("""INSERT INTO study(id,
-                                        study_uid,
-                                        patient_name,
-                                        modality,
-                                        datetime_create,
-                                        patient_id) VALUES(?,?,?,?,?,?)""",[None,dict_study["study_uid"],dict_study["patient_name"],dict_study["modality"],dict_study["datetime_create"],dict_study["patient_id"]])
-        con.commit()
+
+        search_result = None
+        cur.execute(f"SELECT * FROM study WHERE study_uid='{dict_study['study_uid']}' AND patient_id='{dict_study['patient_id']}'")
+        search_result = cur.fetchone()
+        
+        if not search_result:
+            dict_study['datetime_create'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")            
+            
+            cur.execute("""INSERT INTO study(id,
+                                            study_uid,
+                                            patient_name,
+                                            modality,
+                                            datetime_create,
+                                            patient_id) VALUES(?,?,?,?,?,?)""",[None,dict_study["study_uid"],dict_study["patient_name"],dict_study["modality"],dict_study["datetime_create"],dict_study["patient_id"]])
+            
+           
+            con.commit()
+          
+            cur.execute(f"SELECT * FROM study WHERE study_uid='{dict_study['study_uid']}' AND patient_id='{dict_study['patient_id']}'")
+           
+            search_result = cur.fetchone()  
+       
         cur.close()
-    
+        return search_result    
 
     @staticmethod
     def look_for_entry(study_uid,patient_id):
@@ -71,6 +100,7 @@ class StudyTable:
         cur = con.cursor()
         cur.execute(f"SELECT * FROM study WHERE study_uid='{study_uid}' AND patient_id='{patient_id}'")
         if cur.fetchone():
+            print(cur)
             cur.close()
             return True
         cur.close()
@@ -82,16 +112,33 @@ class SeriesTable:
     
     table_name = "series"
 
+
     @staticmethod
-    def add_entry(dict_series):
+    def create_data_set(result_search_study,dir_path,dicom):
+        dict_study ={
+            "series_uid":str(dicom.SeriesInstanceUID),
+            "dir_path":str(dir_path),
+            "id_study":str(result_search_study[0]),         
+        }
+
+        return dict_study
+    @staticmethod
+    def add_and_retrieve_entry(dict_series):
         con = sqlite3.connect(DATA_BASE)
         cur = con.cursor()
-        cur.execute("""INSERT INTO study(id,
-                                        series_uid,
-                                        dir_path,
-                                        id_study) VALUES(?,?,?,?,?,?)""",[None,dict_series["series_uid"],dict_series["dir_path"],dict_series["id_study"]])
-        con.commit()
+        search_result = None
+        cur.execute(f"SELECT * FROM series WHERE id_study='{dict_series['id_study']}' AND series_uid='{dict_series['series_uid']}'")
+        search_result = cur.fetchone()
+        if not search_result:
+            cur.execute("""INSERT INTO series(id,
+                                            series_uid,
+                                            dir_path,
+                                            id_study) VALUES(?,?,?,?)""",[None,dict_series["series_uid"],dict_series["dir_path"],dict_series["id_study"]])
+            con.commit()
+            cur.execute(f"SELECT * FROM series WHERE id_study='{dict_series['id_study']}' AND series_uid='{dict_series['series_uid']}'")
+            search_result = cur.fetchone()
         cur.close()
+        return search_result
 
     @staticmethod
     def look_for_entry(id_study,series_uid):
@@ -119,10 +166,10 @@ class DicomTable:
         
 
     @staticmethod
-    def look_for_entry():
+    def look_for_entry(file_path):
         con = sqlite3.connect(DATA_BASE)
         cur = con.cursor()
-        #cur.execute(f"SELECT * FROM dicom WHERE path='{forming_path}'")
+        cur.execute(f"SELECT * FROM dicom WHERE file_path='{file_path}'")
         if cur.fetchone():
             cur.close()
             return True
