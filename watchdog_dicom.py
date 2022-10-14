@@ -1,5 +1,7 @@
+from email.policy import default
 import time
 import os
+import re
 
 from decouple import config
 from watchdog.observers import Observer
@@ -11,7 +13,7 @@ from handle_pacs_connection import *
 
 
 DEBUG = config('SHOW_FEEDBACK',cast=bool)
-IGNORE_PATH_NAME = "HELLO"
+IGNORE_PATH_NAME = config('IGNORE_PATH_PATTERN',cast=str,default="")
 
 
 def on_created(event): 
@@ -22,27 +24,31 @@ def on_created(event):
             dir_path = os.path.dirname(event.src_path) 
 
             #TODO: Replace for Regex verification
-            if not IGNORE_PATH_NAME in dir_path:
-                all_files_inside_dir = os.listdir(dir_path)  
-                              
-                dicom_file = os.path.basename(event.src_path)
+      
+            all_files_inside_dir = os.listdir(dir_path)  
+            if IGNORE_PATH_NAME:
+                print("AQUi")
+                reg = re.compile(f'{IGNORE_PATH_NAME}')
+                all_files_inside_dir = [x for x in all_files_inside_dir if not reg.match(x)]
 
-                if not DicomTable.look_for_entry(dicom_file,dir_path):
-                    DicomTable.return_allowed_dicoms(all_files_inside_dir,dir_path)
+            dicom_file = os.path.basename(event.src_path)
 
-                    for one_inside_dir in all_files_inside_dir:
-                        file_path = f"{dir_path}/{one_inside_dir}"
+            if not DicomTable.look_for_entry(dicom_file,dir_path):
+                DicomTable.return_allowed_dicoms(all_files_inside_dir,dir_path)
 
-                        if dicom:=check_if_file_is_dicom_and_return(file_path):    
+                for one_inside_dir in all_files_inside_dir:
+                    file_path = f"{dir_path}/{one_inside_dir}"
 
-                            result_search_study=StudyTable.add_and_retrieve_entry(StudyTable.create_data_set(dicom))
-                            result_search_series = SeriesTable.add_and_retrieve_entry(SeriesTable.create_data_set(result_search_study,dir_path,dicom))                            
-                            DicomTable.add_and_retrieve_entry(DicomTable.create_data_set(result_search_series[0],one_inside_dir))
-                            store_scu(dicom,one_inside_dir)
+                    if dicom:=check_if_file_is_dicom_and_return(file_path):    
 
-                    print("----------------------------------------------------------------------------")                       
-                else:
-                    print("Dicom Already Present Outside")
+                        result_search_study=StudyTable.add_and_retrieve_entry(StudyTable.create_data_set(dicom))
+                        result_search_series = SeriesTable.add_and_retrieve_entry(SeriesTable.create_data_set(result_search_study,dir_path,dicom))                            
+                        DicomTable.add_and_retrieve_entry(DicomTable.create_data_set(result_search_series[0],one_inside_dir))
+                        store_scu(dicom,one_inside_dir)
+
+                print("----------------------------------------------------------------------------")                       
+            else:
+                print("Dicom Already Present Outside")
         else:
             print("Não é DICOM")
     
