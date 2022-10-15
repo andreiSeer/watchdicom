@@ -30,11 +30,12 @@ def store_scu(dicom,one_inside_dir):
     assoc = ae.associate(ADDR, PORT, ae_title=AETITLE)    
    
     if assoc.is_established:
-        try:                
+        try: 
+            DicomTable.update_entry(one_inside_dir,"1")            
             status = assoc.send_c_store(dicom)
             print("ENVIANDO ", one_inside_dir)
             if status:
-                DicomTable.update_entry(one_inside_dir)              
+                DicomTable.update_entry(one_inside_dir,"2")              
         except Exception as e:
             if DEBUG:
                 print("Failed", e)

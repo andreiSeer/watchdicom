@@ -1,0 +1,12 @@
+[Unit]
+Description=Send Fail Dicom
+After=multi-target.target
+Conflicts=getty@tty1.service
+
+[Service]
+Type=simple
+ExecStart=/path-to-python-inside-VENV/python3.8 /path-to-python-script/sending_failed_dicom.py
+StandardInput=tty-force
+
+[Install]
+WantedBy=multi-user.target

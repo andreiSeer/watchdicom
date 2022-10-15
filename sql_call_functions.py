@@ -217,10 +217,10 @@ class DicomTable:
         return False
 
     @staticmethod
-    def update_entry(file_path):
+    def update_entry(file_path,update_value="1"):
         con = sqlite3.connect(DATA_BASE)
         cur = con.cursor()
-        was_send = "1"
+        was_send = update_value
         seding_date =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cur.execute(f"UPDATE dicom SET was_send='{was_send}',datetime_send='{seding_date}'  WHERE file_path='{file_path}'")
         con.commit()
