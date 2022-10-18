@@ -1,5 +1,5 @@
 import time
-
+import subprocess
 from decouple import config
 
 from sql_call_functions import *
@@ -23,7 +23,13 @@ while True:
         series_dir_path = dicom_series[2]
         file_path = f"{series_dir_path}/{dicom_file}"
         if dicom:=check_if_file_is_dicom_and_return(file_path):
-            store_scu(dicom,dicom_file)
+            if not store_scu(dicom,dicom_file):
+            	command = f'python3 -m pynetdicom storescu {ADDR} {PORT} {file_path} -aec {AETITLE} -d -cx'
+            	process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+            	output, error = process.communicate()
+            	if error is None:
+            		DicomTable.update_entry(dicom_file,"2")
+            
         
 
 

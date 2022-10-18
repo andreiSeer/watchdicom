@@ -1,7 +1,5 @@
 import sqlite3
 import datetime
-from tkinter import E
-from unittest import result
 from decouple import config
 DATA_BASE = config('DB_NAME',cast=str)
 
@@ -234,7 +232,8 @@ class DicomTable:
         con = sqlite3.connect(DATA_BASE)
         cur = con.cursor()
         was_send = "0"
-        cur.execute(f"SELECT * FROM dicom WHERE was_send='{was_send}'")
+        trying_resend = "1"
+        cur.execute(f"SELECT * FROM dicom WHERE was_send in ('{was_send}', '{trying_resend}')")
         records = cur.fetchall()
         cur.close()
         return records
