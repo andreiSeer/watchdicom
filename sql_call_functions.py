@@ -219,8 +219,11 @@ class DicomTable:
         con = sqlite3.connect(DATA_BASE)
         cur = con.cursor()
         was_send = update_value
-        seding_date =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        cur.execute(f"UPDATE dicom SET was_send='{was_send}',datetime_send='{seding_date}'  WHERE file_path='{file_path}'")
+        if(update_value=='2'):
+            seding_date =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cur.execute(f"UPDATE dicom SET was_send='{was_send}',datetime_send='{seding_date}'  WHERE file_path='{file_path}'")
+        else:
+            cur.execute(f"UPDATE dicom SET was_send='{was_send}'  WHERE file_path='{file_path}'")
         con.commit()
         cur.close()
         
