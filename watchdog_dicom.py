@@ -41,7 +41,8 @@ def on_created(event):
                 for one_inside_dir in all_files_inside_dir:
                     file_path = f"{dir_path}/{one_inside_dir}"
 
-                    if dicom:=check_if_file_is_dicom_and_return(file_path):    
+                    dicom=check_if_file_is_dicom_and_return(file_path)
+                    if dicom:    
 
                         result_search_study=StudyTable.add_and_retrieve_entry(StudyTable.create_data_set(dicom))
                         result_search_series = SeriesTable.add_and_retrieve_entry(SeriesTable.create_data_set(result_search_study,dir_path,dicom))                            

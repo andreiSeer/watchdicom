@@ -16,7 +16,8 @@ DEBUG = config('SHOW_FEEDBACK',cast=bool)
 
 def check_if_file_is_dicom_and_return(src_path):
     time.sleep(5)
-    if dicom:=PDCM.read_file(src_path,force=True):        
+    dicom=PDCM.read_file(src_path,force=True)
+    if dicom:        
         if dicom.StudyInstanceUID:
             #try:
             return dicom

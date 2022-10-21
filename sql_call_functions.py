@@ -188,7 +188,8 @@ class DicomTable:
         cur = con.cursor()
         cur.execute(f"SELECT * FROM dicom WHERE file_path='{file_path}'")
 
-        if search_dicom:=cur.fetchone():
+        search_dicom=cur.fetchone()
+        if search_dicom:
 
             cur_serie = con.cursor()         
             cur_serie.execute(f"SELECT * FROM series where dir_path='{dir_path}' AND id='{search_dicom[4]}'")      
