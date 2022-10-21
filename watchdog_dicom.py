@@ -1,4 +1,3 @@
-# -*- coding: future_fstrings -*-
 from email.policy import default
 import time
 import os
@@ -40,7 +39,7 @@ def on_created(event):
                 DicomTable.return_allowed_dicoms(all_files_inside_dir,dir_path)
 
                 for one_inside_dir in all_files_inside_dir:
-                    file_path = f"{dir_path}/{one_inside_dir}"
+                    file_path = dir_path+"/"+one_inside_dir
 
                     dicom=check_if_file_is_dicom_and_return(file_path)
                     if dicom:    

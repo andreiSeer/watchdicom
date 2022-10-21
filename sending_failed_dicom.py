@@ -1,4 +1,3 @@
-# -*- coding: future_fstrings -*-
 import time
 import subprocess
 from decouple import config
@@ -22,11 +21,12 @@ while True:
 
         series_uid = dicom_series[1]
         series_dir_path = dicom_series[2]
-        file_path = f"{series_dir_path}/{dicom_file}"
+        file_path = series_dir_path+"/"+dicom_file
         dicom=check_if_file_is_dicom_and_return(file_path)
         if dicom:
             if not store_scu(dicom,dicom_file):
-                command = f'python3 -m pynetdicom storescu {ADDR} {PORT} {file_path} -aec {AETITLE} -d -cx'
+                #command = f'python3 -m pynetdicom storescu {ADDR} {PORT} {file_path} -aec {AETITLE} -d -cx'
+                command = "python3 -m pynetdicom storescu "+ADDR+" "+PORT+" "+file_path+" -aec"+AETITLE+" -d -cx"
                 process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
                 output, error = process.communicate()
                 if error is None:

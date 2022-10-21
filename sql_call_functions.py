@@ -1,24 +1,9 @@
-# -*- coding: future_fstrings -*-
 import sqlite3
 import datetime
 from decouple import config
 DATA_BASE = config('DB_NAME',cast=str)
 
-# def look_for_all_on_sendedfaildicom_table():
-#     con = sqlite3.connect("db_file_dicom.db")
-#     cur = con.cursor()
-#     cur.execute(f"SELECT * FROM sendedfaildicom")
-#     records = cur.fetchall()
-#     cur.close()
-#     return records
 
-# def delete_entry_on_sendedfaildicom_table(forming_path):
-#     print("DELETING")
-#     con = sqlite3.connect("db_file_dicom.db")
-#     cur = con.cursor()
-#     cur.execute(f"DELETE FROM sendedfaildicom WHERE path='{forming_path}'")   
-#     con.commit()
-#     cur.close()
 
 #DATETIME SQLITE FORMAT '2007-01-01 10:00:00'   
 def create_or_start_db():
@@ -71,7 +56,8 @@ class StudyTable:
         cur = con.cursor()
 
         search_result = None
-        cur.execute(f"SELECT * FROM study WHERE study_uid='{dict_study['study_uid']}' AND patient_id='{dict_study['patient_id']}'")
+        #cur.execute(f"SELECT * FROM study WHERE study_uid='{dict_study['study_uid']}' AND patient_id='{dict_study['patient_id']}'")       
+        cur.execute("SELECT * FROM study WHERE study_uid= ? AND patient_id = ?",(dict_study['study_uid'],dict_study['patient_id']))
         search_result = cur.fetchone()
         
         if not search_result:
@@ -87,7 +73,8 @@ class StudyTable:
            
             con.commit()
           
-            cur.execute(f"SELECT * FROM study WHERE study_uid='{dict_study['study_uid']}' AND patient_id='{dict_study['patient_id']}'")
+            #cur.execute(f"SELECT * FROM study WHERE study_uid='{dict_study['study_uid']}' AND patient_id='{dict_study['patient_id']}'")
+            cur.execute("SELECT * FROM study WHERE study_uid= ? AND patient_id = ?",(dict_study['study_uid'],dict_study['patient_id']))
            
             search_result = cur.fetchone()  
        
@@ -117,7 +104,9 @@ class SeriesTable:
         con = sqlite3.connect(DATA_BASE)
         cur = con.cursor()
         search_result = None
-        cur.execute(f"SELECT * FROM series WHERE id_study='{dict_series['id_study']}' AND series_uid='{dict_series['series_uid']}'")
+        #cur.execute(f"SELECT * FROM series WHERE id_study='{dict_series['id_study']}' AND series_uid='{dict_series['series_uid']}'")
+
+        cur.execute("SELECT * FROM series WHERE id_study= ? AND series_uid = ?",(dict_series['id_study'],dict_series['series_uid']))
         search_result = cur.fetchone()
         if not search_result:
             cur.execute("""INSERT INTO series(id,
@@ -125,7 +114,8 @@ class SeriesTable:
                                             dir_path,
                                             id_study) VALUES(?,?,?,?)""",[None,dict_series["series_uid"],dict_series["dir_path"],dict_series["id_study"]])
             con.commit()
-            cur.execute(f"SELECT * FROM series WHERE id_study='{dict_series['id_study']}' AND series_uid='{dict_series['series_uid']}'")
+            #cur.execute(f"SELECT * FROM series WHERE id_study='{dict_series['id_study']}' AND series_uid='{dict_series['series_uid']}'")
+            cur.execute("SELECT * FROM series WHERE id_study= ? AND series_uid = ?",(dict_series['id_study'],dict_series['series_uid']))
             search_result = cur.fetchone()
         cur.close()
         return search_result
@@ -135,7 +125,8 @@ class SeriesTable:
     def look_for_series_entry(series_id):
         con = sqlite3.connect(DATA_BASE)
         cur = con.cursor()
-        cur.execute(f"SELECT * FROM series WHERE id='{series_id}'")
+        #cur.execute(f"SELECT * FROM series WHERE id='{series_id}'")
+        cur.execute("SELECT * FROM series WHERE id= ?",(series_id,))
         query_result = cur.fetchone()
         cur.close()
         return query_result
@@ -176,7 +167,8 @@ class DicomTable:
                                         datetime_send,
                                         id_serie) VALUES(?,?,?,?,?)""",[None,dict_series["file_path"],"0",None,dict_series["id_serie"]])
         con.commit()
-        cur.execute(f"SELECT * FROM dicom WHERE file_path='{dict_series['file_path']}' AND id_serie='{dict_series['id_serie']}'")
+        #cur.execute(f"SELECT * FROM dicom WHERE file_path='{dict_series['file_path']}' AND id_serie='{dict_series['id_serie']}'")
+        cur.execute("SELECT * FROM dicom WHERE file_path= ? AND id_serie = ?",(dict_series['file_path'],dict_series['id_serie']))
         search_result = cur.fetchone()
         cur.close()
         return search_result
@@ -187,13 +179,15 @@ class DicomTable:
        
         con = sqlite3.connect(DATA_BASE)        
         cur = con.cursor()
-        cur.execute(f"SELECT * FROM dicom WHERE file_path='{file_path}'")
+        #cur.execute(f"SELECT * FROM dicom WHERE file_path='{file_path}'")
+        cur.execute("SELECT * FROM dicom WHERE file_path= ?",(file_path,))
 
         search_dicom=cur.fetchone()
         if search_dicom:
 
             cur_serie = con.cursor()         
-            cur_serie.execute(f"SELECT * FROM series where dir_path='{dir_path}' AND id='{search_dicom[4]}'")      
+            #cur_serie.execute(f"SELECT * FROM series where dir_path='{dir_path}' AND id='{search_dicom[4]}'")     
+            cur_serie.execute("SELECT * FROM series WHERE dir_path= ? AND id = ?",(dir_path,search_dicom[4]))
 
             if cur_serie.fetchone():
 
@@ -215,7 +209,7 @@ class DicomTable:
         cur.close()
 
         return False
-
+    #TODO: Add series on search
     @staticmethod
     def update_entry(file_path,update_value="1"):
         con = sqlite3.connect(DATA_BASE)
@@ -223,9 +217,11 @@ class DicomTable:
         was_send = update_value
         if(update_value=='2'):
             seding_date =  datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            cur.execute(f"UPDATE dicom SET was_send='{was_send}',datetime_send='{seding_date}'  WHERE file_path='{file_path}'")
+            #cur.execute(f"UPDATE dicom SET was_send='{was_send}',datetime_send='{seding_date}'  WHERE file_path='{file_path}'")
+            cur.execute("UPDATE dicom SET was_send=?, datetime_send=? WHERE file_path=?",(was_send,seding_date,file_path))
         else:
-            cur.execute(f"UPDATE dicom SET was_send='{was_send}'  WHERE file_path='{file_path}'")
+            #cur.execute(f"UPDATE dicom SET was_send='{was_send}'  WHERE file_path='{file_path}'")
+            cur.execute("UPDATE dicom SET was_send=? WHERE file_path=?",(was_send,file_path))
         con.commit()
         cur.close()
         
@@ -238,7 +234,8 @@ class DicomTable:
         cur = con.cursor()
         was_send = "0"
         trying_resend = "1"
-        cur.execute(f"SELECT * FROM dicom WHERE was_send in ('{was_send}', '{trying_resend}')")
+        #cur.execute(f"SELECT * FROM dicom WHERE was_send in ('{was_send}', '{trying_resend}')")
+        cur.execute("SELECT * FROM dicom WHERE was_send=? OR was_send=?",(was_send,trying_resend))
         records = cur.fetchall()
         cur.close()
         return records
@@ -249,7 +246,7 @@ class DicomTable:
         con = sqlite3.connect(DATA_BASE)
         cur = con.cursor()
         was_send = "0"
-        cur.execute(f"SELECT * FROM dicom")
+        cur.execute("SELECT * FROM dicom")
         records = cur.fetchall()
         cur.close()
         return records
@@ -258,7 +255,7 @@ class DicomTable:
     @staticmethod
     def send_dicom_to_pacs():
         pass
-
+    #TODO: Add series on search
     @staticmethod
     def return_allowed_dicoms(all_files_inside_dir,dir_path):
 
