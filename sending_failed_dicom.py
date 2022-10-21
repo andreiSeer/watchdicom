@@ -1,3 +1,4 @@
+# -*- coding: future_fstrings -*-
 import time
 import subprocess
 from decouple import config

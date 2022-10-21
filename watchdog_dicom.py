@@ -1,3 +1,4 @@
+# -*- coding: future_fstrings -*-
 from email.policy import default
 import time
 import os

@@ -1,3 +1,4 @@
+# -*- coding: future_fstrings -*-
 import sqlite3
 import datetime
 from decouple import config
