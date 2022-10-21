@@ -18,7 +18,7 @@ IGNORE_PATH_NAME = config('IGNORE_PATH_PATTERN',default="")
 def not_dir_exclude(path):
     print(path)
     if IGNORE_PATH_NAME:
-        reg = re.compile(f'{IGNORE_PATH_NAME}')
+        reg = re.compile(IGNORE_PATH_NAME)
         return reg.match(path) is None
     return True
 
