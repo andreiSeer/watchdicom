@@ -26,11 +26,17 @@ while True:
         if dicom:
             if not store_scu(dicom,dicom_file):
                 #command = f'python3 -m pynetdicom storescu {ADDR} {PORT} {file_path} -aec {AETITLE} -d -cx'
-                command = "python3 -m pynetdicom storescu "+ADDR+" "+PORT+" "+file_path+" -aec"+AETITLE+" -d -cx"
-                process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-                output, error = process.communicate()
-                if error is None:
-                    DicomTable.update_entry(dicom_file,"2")
+                command = "storescu "+ADDR+" "+str(PORT)+" "+file_path+" -aec "+AETITLE+" -xs -nh"
+                process = subprocess.run(command, shell=True, capture_output=True)
+                if process.stderr:
+                    if "I: Received Store Response (Success)" in process.stderr.decode('utf-8'):
+                        print("Sucesso")
+                        DicomTable.update_entry(dicom_file,"2")
+                else:
+                    print("Falha")
+                    print(process.stderr)
+           
+                    
             
         
 
